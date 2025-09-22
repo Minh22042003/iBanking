@@ -1,0 +1,148 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
+.payments-page {
+  font-family: "Poppins", sans-serif;
+  background-color: #f0f4f8;
+  padding: 3rem;
+  display: flex;
+  justify-content: center;
+}
+
+.payments-container {
+  width: 100%;
+  max-width: 800px;
+  background: #fff;
+  padding: 3rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.payments-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #003d82;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.form-section {
+  border-bottom: 1px solid #e0e7ff;
+  padding-bottom: 2rem;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #0056b3;
+  margin-bottom: 1.5rem;
+}
+
+.input-group {
+  margin-bottom: 1rem;
+}
+
+.input-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-wrapper .input-icon {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  transform: translateY(-50%);
+  color: #999;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: 0.8rem 1rem 0.8rem 3rem;
+  background: #f7faff;
+  border: 1px solid #d9e2ec;
+  border-radius: 0.5rem;
+  color: #333;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.input-wrapper input:read-only {
+  background: #e9ecef;
+  color: #666;
+}
+
+.details-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-item span {
+  font-weight: 500;
+  color: #666;
+}
+
+.detail-item strong {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #003d82;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-group input {
+  width: 18px;
+  height: 18px;
+}
+
+.checkbox-group label {
+  font-weight: 500;
+  color: #333;
+}
+
+.confirm-button {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  border: none;
+  border-radius: 0.5rem;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirm-button:disabled {
+  background: #a0c7e4;
+  cursor: not-allowed;
+}
+
+.confirm-button:not(:disabled):hover {
+  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+  transform: translateY(-2px);
+}
