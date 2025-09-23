@@ -1,15 +1,78 @@
 import { useState, useEffect } from "react";
 import "../styles/Payments.css";
+import { useCookies } from "react-cookie";
 
 export default function Payments() {
+  const [cookie, , removeCookie] = useCookies(["token"])
   const [studentId, setStudentId] = useState("");
   const [studentName, setStudentName] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
+  const [username, setUsername] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [email, setEmail] = useState("")
+  const [studentTuition, setStudentTuition] = useState("")
 
   useEffect(() => {
     setIsFormValid(studentId !== "" && studentName !== "" && agreeTerms);
-  }, [studentId, studentName, agreeTerms]);
+  }, [agreeTerms, studentId, studentName])
+
+  useEffect(() => {
+    const token = cookie.token
+    if(!token) return;
+    if(studentId != ""){
+      const fetchStudent = async () => {
+        try {
+          const res = await fetch(`/api/student/${studentId}`, {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+          })
+          if (!res.ok) {
+            setStudentName("Not found")
+            setStudentTuition("0.00")
+            throw new Error("Failed to fetch student");
+          }
+          const data = await res.json();
+          setStudentName(data.name)
+          setStudentTuition(data.tuition)
+        } catch (error) {
+          console.error("Fetch student failed", error);
+        }
+      }
+      fetchStudent();
+    }
+  }, [studentId])
+
+  useEffect(() => {
+    const token = cookie.token
+    if(!token) return;
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        if (!res.ok) {
+          throw new Error("Not authenticated");
+        }
+        const data = await res.json();
+        setUsername(data.name);
+        setPhoneNumber(data.phoneNumber)
+        setEmail(data.email)
+      } catch (err) {
+        console.error("Fetch user failed", err);
+        // có thể xóa cookie token nếu hết hạn / không hợp lệ
+        removeCookie("token", { path: "/" });
+      }
+    }
+    fetchUser();
+  }, [cookie.token, removeCookie]);
 
   return (
     <div className="payments-page">
@@ -24,21 +87,21 @@ export default function Payments() {
               <label>Full Name</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#128100;</span>
-                <input type="text" value="John Doe" readOnly />
+                <input type="text" value={username || "Not found"} readOnly />
               </div>
             </div>
             <div className="input-group">
               <label>Phone Number</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#128222;</span>
-                <input type="text" value="(555) 123-4567" readOnly />
+                <input type="text" value={phoneNumber || "Not found"} readOnly />
               </div>
             </div>
             <div className="input-group">
               <label>Email Address</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#9993;</span>
-                <input type="text" value="johndoe@email.com" readOnly />
+                <input type="text" value={email || "Not found"} readOnly />
               </div>
             </div>
           </div>
@@ -65,8 +128,8 @@ export default function Payments() {
                 <input
                   type="text"
                   value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="Enter Student Name"
+                  placeholder="Student Name"
+                  readOnly
                 />
               </div>
             </div>
@@ -74,7 +137,7 @@ export default function Payments() {
               <label>Amount Due</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#128176;</span>
-                <input type="text" value="0.00 VNĐ" readOnly />
+                <input type="text" value={studentTuition + " VNĐ"} readOnly />
               </div>
             </div>
           </div>

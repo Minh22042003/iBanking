@@ -1,6 +1,42 @@
 import "../styles/Login.css";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCookies } from "react-cookie";
 
 export default function Login() {
+
+  const navigate = useNavigate();
+  const [, setCookie] = useCookies(["token"]);
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        //setMessage(`Đăng nhập thành công! Xin chào ${data.user.name}`);
+        setCookie("token", data.token, {path: "/", maxAge: 3600})
+        navigate('/payments')
+      } else {
+        setMessage(data.message);
+      }
+    // eslint-disable-next-line no-unused-vars
+    } catch (err) {
+      setMessage("Lỗi kết nối API");
+    }
+  };
+
   return (
     <div className="login-page">
       <div className="login-container">
@@ -20,7 +56,7 @@ export default function Login() {
             <p className="form-subtitle">
               Please log in to your account to continue
             </p>
-            <form>
+            <form onSubmit={handleLogin}>
               <div className="input-group">
                 <span className="input-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -31,6 +67,8 @@ export default function Login() {
                   type="text"
                   placeholder="Username"
                   className="input-field"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
               <div className="input-group">
@@ -43,12 +81,15 @@ export default function Login() {
                   type="password"
                   placeholder="Password"
                   className="input-field"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
               <button type="submit" className="login-button">
                 Log In
               </button>
             </form>
+            {message && <p>{message}</p>}
           </div>
         </div>
         <div className="branding-container">
