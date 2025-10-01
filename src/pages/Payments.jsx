@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "../styles/Payments.css";
 import { useCookies } from "react-cookie";
+import { formatCurrency } from "../utils/format";
 
 export default function Payments() {
   const [cookie, , removeCookie] = useCookies(["token"])
@@ -11,6 +12,7 @@ export default function Payments() {
   const [username, setUsername] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [email, setEmail] = useState("")
+  const [balance, setBalance] = useState("")
   const [studentTuition, setStudentTuition] = useState("")
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function Payments() {
             },
           })
           if (!res.ok) {
-            setStudentName("Not found")
+            setStudentName("")
             setStudentTuition("0.00")
             throw new Error("Failed to fetch student");
           }
@@ -65,6 +67,7 @@ export default function Payments() {
         setUsername(data.name);
         setPhoneNumber(data.phoneNumber)
         setEmail(data.email)
+        setBalance(data.balance)
       } catch (err) {
         console.error("Fetch user failed", err);
         // có thể xóa cookie token nếu hết hạn / không hợp lệ
@@ -74,12 +77,26 @@ export default function Payments() {
     fetchUser();
   }, [cookie.token, removeCookie]);
 
+  const handleConfirm = (e) => {
+    e.preventDefault();
+    if (studentName === "") {
+      alert("Student not found. Please check the Student ID.");
+      return;
+    }
+    if (parseFloat(studentTuition) >= parseFloat(balance)) {
+      alert("Insufficient balance to complete the transaction.");
+      return;
+    }
+    // Handle successful transaction
+    alert("Transaction successful!");
+  };
+
   return (
     <div className="payments-page">
       <div className="payments-container">
         <h2 className="payments-title">Tuition Payment</h2>
 
-        <form className="payment-form">
+        <form className="payment-form" onSubmit={handleConfirm}>
           {/* Payer's Information Section */}
           <div className="form-section">
             <h3 className="section-title">Payer's Information</h3>
@@ -137,7 +154,7 @@ export default function Payments() {
               <label>Amount Due</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#128176;</span>
-                <input type="text" value={studentTuition + " VNĐ"} readOnly />
+                <input type="text" value={formatCurrency(studentTuition) + " VNĐ"} readOnly />
               </div>
             </div>
           </div>
@@ -148,11 +165,11 @@ export default function Payments() {
             <div className="details-row">
               <div className="detail-item">
                 <span>Available Balance</span>
-                <strong>10,000,000 VNĐ</strong>
+                <strong>{formatCurrency(balance)} VNĐ</strong>
               </div>
               <div className="detail-item">
                 <span>Tuition Amount to Pay</span>
-                <strong>0.00 VNĐ</strong>
+                <strong>{studentTuition != "" ? formatCurrency(studentTuition):"0.00"} VNĐ</strong>
               </div>
             </div>
             <div className="checkbox-group">

@@ -89,7 +89,7 @@ export default function Login() {
                 Log In
               </button>
             </form>
-            {message && <p>{message}</p>}
+            {message && <p className="text-red-500 italic">{message}</p>}
           </div>
         </div>
         <div className="branding-container">

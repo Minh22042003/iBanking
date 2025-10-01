@@ -30,6 +30,7 @@ export const handlers = [
           phoneNumber: "07662543782",
           email: "admin@gmail.com",
           avatar: "https://i.pinimg.com/1200x/14/05/2b/14052b697b0b6e715ac67f4d2ca71c7f.jpg",
+          balance: 10000000
         },
         { status: 200 }
       );
@@ -47,7 +48,7 @@ export const handlers = [
           {
             id: 1,
             name: "Dương Hải Minh",
-            tuition: "13005000"
+            tuition: 13005000
           },
           { status: 200 }
         );

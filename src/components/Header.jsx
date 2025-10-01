@@ -7,6 +7,15 @@ export default function Header() {
   const [cookie, , removeCookie] = useCookies(["token"])
   const [username, setUsername] = useState("")
   const [avatar, setAvatar] = useState("")
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const toogleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  }
+
+  const Logout = () => {
+    removeCookie("token", {path: '/'})
+  }
 
   useEffect(() => {
     const token = cookie.token
@@ -62,12 +71,21 @@ export default function Header() {
         </a>
       </nav>
       <div className="user-profile">
-        <span className="welcome-message">Welcome, {username || "User"}</span>
-        <img
-          src= {avatar || "https://i.pravatar.cc/40"}
-          alt="User Avatar"
-          className="avatar"
-        />
+        <div className="profile" onClick={toogleMenu}>
+          <span className="welcome-message">Welcome, {username || "User"}</span>
+          <img
+            src= {avatar || "https://i.pravatar.cc/40"}
+            alt="User Avatar"
+            className="avatar"
+          />
+        </div>
+        {
+          isMenuOpen && 
+          <div className="dropdown-menu">
+            <div className="menu-item">Thông tin người dùng</div>
+            <div className="menu-item" onClick={Logout}>Đăng xuất</div>
+          </div>
+        }
       </div>
     </header>
   );

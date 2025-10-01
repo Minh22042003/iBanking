@@ -5,17 +5,20 @@ import NotFound from "../pages/NotFound.jsx";
 import Login from "../pages/Login.jsx";
 import Payments from "../pages/Payments.jsx"; 
 import MainLayout from "../layouts/MainLayout.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="*" element={<NotFound />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/payments" element={<Payments />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
