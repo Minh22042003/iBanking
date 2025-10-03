@@ -63,9 +63,9 @@ export default function Header() {
         <NavLink to="/payments" className="nav-link">
           Payments
         </NavLink>
-        <a href="#" className="nav-link">
+        <NavLink to="/history" className="nav-link">
           History
-        </a>
+        </NavLink>
         <a href="#" className="nav-link">
           Profile
         </a>

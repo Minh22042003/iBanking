@@ -6,6 +6,7 @@ import Login from "../pages/Login.jsx";
 import Payments from "../pages/Payments.jsx"; 
 import MainLayout from "../layouts/MainLayout.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
+import History from "../pages/History.jsx";
 
 export default function AppRoutes() {
   return (
@@ -17,6 +18,7 @@ export default function AppRoutes() {
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/payments" element={<Payments />} />
+            <Route path="/history" element={<History></History>}></Route>
             <Route path="*" element={<NotFound />} />
           </Route>
         </Route>
