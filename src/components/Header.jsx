@@ -1,13 +1,14 @@
 import { NavLink } from "react-router-dom";
 import "../styles/Header.css";
 import { useCookies } from "react-cookie";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useUserInfo } from "../hooks/useUserInfo";
 
 export default function Header() {
   const [cookie, , removeCookie] = useCookies(["token"])
-  const [username, setUsername] = useState("")
-  const [avatar, setAvatar] = useState("")
+  const token = cookie.token;
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const user = useUserInfo(token, removeCookie);
 
   const toogleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -16,33 +17,6 @@ export default function Header() {
   const Logout = () => {
     removeCookie("token", {path: '/'})
   }
-
-  useEffect(() => {
-    const token = cookie.token
-    if(!token) return;
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/user", {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        });
-        if (!res.ok) {
-          throw new Error("Not authenticated");
-        }
-        const data = await res.json();
-        setUsername(data.name);
-        setAvatar(data.avatar);
-      } catch (err) {
-        console.error("Fetch user failed", err);
-        // có thể xóa cookie token nếu hết hạn / không hợp lệ
-        removeCookie("token", { path: "/" });
-      }
-    }
-    fetchUser();
-  }, [cookie.token, removeCookie])
 
   return (
     <header className="header">
@@ -72,9 +46,9 @@ export default function Header() {
       </nav>
       <div className="user-profile">
         <div className="profile" onClick={toogleMenu}>
-          <span className="welcome-message">Welcome, {username || "User"}</span>
+          <span className="welcome-message">Welcome, {user?.Username || "User"}</span>
           <img
-            src= {avatar || "https://i.pravatar.cc/40"}
+            src= {"https://i.pravatar.cc/40"}
             alt="User Avatar"
             className="avatar"
           />

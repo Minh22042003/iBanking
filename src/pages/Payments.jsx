@@ -4,13 +4,17 @@ import { useCookies } from "react-cookie";
 import { formatCurrency } from "../utils/format";
 import { useStudentInfo } from "../hooks/useStudentInfo";
 import { useUserInfo } from "../hooks/useUserInfo";
+import { useAccountInfo } from "../hooks/useAccountInfo";
+import { useTuitionDebt } from "../hooks/useTuitionDebt";
 
 export default function Payments() {
   const [cookie, , removeCookie] = useCookies(["token"]);
   const token = cookie.token;
 
-  const { studentInfo, debouncedFetchRef } = useStudentInfo(token);
+  const { studentInfo, studentInfoLoading, debouncedFetchRef } = useStudentInfo(token);
   const user = useUserInfo(token, removeCookie);
+  const account = useAccountInfo(token, user?.UserID);
+  const { tuition: tuitionDebt, loading: tuitionLoading } = useTuitionDebt(token, studentInfo?.StudentID);
 
   const [studentId, setStudentId] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
@@ -22,8 +26,8 @@ export default function Payments() {
   };
 
   useEffect(() => {
-    setIsFormValid(studentId !== "" && agreeTerms);
-  }, [agreeTerms, studentId]);
+    setIsFormValid(studentId !== "" && agreeTerms && tuitionDebt && tuitionDebt.AmountDue != null && !tuitionLoading);
+  }, [agreeTerms, studentId, studentInfo, tuitionDebt, tuitionLoading]);
 
   const handleConfirm = (e) => {
     e.preventDefault();
@@ -31,7 +35,7 @@ export default function Payments() {
       alert("Student not found. Please check the Student ID.");
       return;
     }
-    if (parseFloat(studentInfo.tuition) >= parseFloat(user.balance)) {
+    if (parseFloat(tuitionDebt.AmountDue) >= parseFloat(account.Balance)) {
       alert("Insufficient balance to complete the transaction.");
       return;
     }
@@ -51,21 +55,21 @@ export default function Payments() {
               <label>Full Name</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#128100;</span>
-                <input type="text" value={user.name || "Not found"} readOnly />
+                <input type="text" value={user?.FullName || "Not found"} readOnly />
               </div>
             </div>
             <div className="input-group">
               <label>Phone Number</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#128222;</span>
-                <input type="text" value={user.phoneNumber || "Not found"} readOnly />
+                <input type="text" value={user?.Phone || "Not found"} readOnly />
               </div>
             </div>
             <div className="input-group">
               <label>Email Address</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#9993;</span>
-                <input type="text" value={user.email || "Not found"} readOnly />
+                <input type="text" value={user?.Email || "Not found"} readOnly />
               </div>
             </div>
           </div>
@@ -91,7 +95,7 @@ export default function Payments() {
                 <span className="input-icon">&#128100;</span>
                 <input
                   type="text"
-                  value={studentInfo != null ? studentInfo.name : ""}
+                  value={studentInfoLoading ? "Đang tải" : studentInfo?.FullName || ""}
                   placeholder="Student Name"
                   readOnly
                 />
@@ -101,7 +105,7 @@ export default function Payments() {
               <label>Amount Due</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#128176;</span>
-                <input type="text" value={(studentInfo != null ? formatCurrency(studentInfo.tuition) : 0.00) + " VNĐ"} readOnly />
+                <input type="text" value={tuitionLoading ? "Đang tải..." : tuitionDebt ? `${formatCurrency(tuitionDebt.AmountDue)} VNĐ` : "0 VNĐ"} readOnly />
               </div>
             </div>
           </div>
@@ -112,11 +116,11 @@ export default function Payments() {
             <div className="details-row">
               <div className="detail-item">
                 <span>Available Balance</span>
-                <strong>{formatCurrency(user.balance)} VNĐ</strong>
+                <strong>{formatCurrency(account?.Balance)} VNĐ</strong>
               </div>
               <div className="detail-item">
                 <span>Tuition Amount to Pay</span>
-                <strong>{studentInfo != null ? formatCurrency(studentInfo.tuition):"0.00"} VNĐ</strong>
+                <strong>{tuitionLoading ? "Đang tải..." : tuitionDebt ? `${formatCurrency(tuitionDebt.AmountDue)} VNĐ` : "0 VNĐ"}</strong>
               </div>
             </div>
             <div className="checkbox-group">
