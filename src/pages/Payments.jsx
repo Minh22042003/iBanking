@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/Payments.css";
 import { useCookies } from "react-cookie";
 import { formatCurrency } from "../utils/format";
@@ -10,6 +11,7 @@ import { useTuitionDebt } from "../hooks/useTuitionDebt";
 export default function Payments() {
   const [cookie, , removeCookie] = useCookies(["token"]);
   const token = cookie.token;
+  const navigate = useNavigate();
 
   const { studentInfo, studentInfoLoading, debouncedFetchRef } = useStudentInfo(token);
   const user = useUserInfo(token, removeCookie);
@@ -20,6 +22,10 @@ export default function Payments() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
 
+  // 🟡 Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+
   const handleStudentIdChange = (e) => {
     setStudentId(e.target.value);
     debouncedFetchRef.current(e.target.value);
@@ -29,17 +35,74 @@ export default function Payments() {
     setIsFormValid(studentId !== "" && agreeTerms && tuitionDebt && tuitionDebt.AmountDue != null && !tuitionLoading);
   }, [agreeTerms, studentId, studentInfo, tuitionDebt, tuitionLoading]);
 
-  const handleConfirm = (e) => {
+  const handleConfirm = async (e) => {
     e.preventDefault();
-    if (!studentInfo || studentInfo.name === "") {
-      alert("Student not found. Please check the Student ID.");
+
+    if (!studentInfo || studentInfo.FullName === "") {
+      setModalMessage("Không tìm thấy sinh viên. Vui lòng kiểm tra lại Mã sinh viên.");
+      setShowModal(true);
       return;
     }
-    if (parseFloat(tuitionDebt.AmountDue) >= parseFloat(account.Balance)) {
-      alert("Insufficient balance to complete the transaction.");
+
+    const tuitionAmount = parseFloat(tuitionDebt?.AmountDue || 0);
+    const accountBalance = parseFloat(account?.Balance || 0);
+
+    if (tuitionAmount <= 0) {
+      setModalMessage("Dữ liệu học phí không hợp lệ. Vui lòng thử lại.");
+      setShowModal(true);
       return;
     }
-    alert("Transaction successful!");
+
+    if (accountBalance < tuitionAmount) {
+      setModalMessage(
+        `Số dư tài khoản hiện tại của bạn là ${formatCurrency(accountBalance)} VNĐ, không đủ để thanh toán học phí ${formatCurrency(tuitionAmount)} VNĐ.`
+      );
+      setShowModal(true);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          studentId: studentInfo.StudentID,
+          amount: tuitionAmount,
+          payerId: user?.UserID,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        navigate("/otp", {
+          state: {
+            transactionId: data.transactionId,
+            amount: tuitionAmount,
+            studentInfo: {
+              id: studentInfo.StudentID,
+              name: studentInfo.FullName,
+            },
+            payerInfo: {
+              name: user?.FullName,
+              phone: user?.Phone,
+              email: user?.Email,
+            },
+            accountBalance,
+          },
+        });
+      } else {
+        setModalMessage(data.message || "Thanh toán thất bại. Vui lòng thử lại.");
+        setShowModal(true);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setModalMessage("Đã xảy ra lỗi. Vui lòng thử lại.");
+      setShowModal(true);
+    }
   };
 
   return (
@@ -48,7 +111,7 @@ export default function Payments() {
         <h2 className="payments-title">Tuition Payment</h2>
 
         <form className="payment-form" onSubmit={handleConfirm}>
-          {/* Payer's Information Section */}
+          {/* Thông tin người thanh toán */}
           <div className="form-section">
             <h3 className="section-title">Payer's Information</h3>
             <div className="input-group">
@@ -74,7 +137,7 @@ export default function Payments() {
             </div>
           </div>
 
-          {/* Tuition Information Section */}
+          {/* Thông tin học phí */}
           <div className="form-section">
             <h3 className="section-title">Tuition Information</h3>
             <div className="input-group">
@@ -105,12 +168,22 @@ export default function Payments() {
               <label>Amount Due</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#128176;</span>
-                <input type="text" value={tuitionLoading ? "Đang tải..." : tuitionDebt ? `${formatCurrency(tuitionDebt.AmountDue)} VNĐ` : "0 VNĐ"} readOnly />
+                <input
+                  type="text"
+                  value={
+                    tuitionLoading
+                      ? "Đang tải..."
+                      : tuitionDebt
+                      ? `${formatCurrency(tuitionDebt.AmountDue)} VNĐ`
+                      : "0 VNĐ"
+                  }
+                  readOnly
+                />
               </div>
             </div>
           </div>
 
-          {/* Payment Details Section */}
+          {/* Chi tiết thanh toán */}
           <div className="form-section">
             <h3 className="section-title">Payment Details</h3>
             <div className="details-row">
@@ -120,7 +193,13 @@ export default function Payments() {
               </div>
               <div className="detail-item">
                 <span>Tuition Amount to Pay</span>
-                <strong>{tuitionLoading ? "Đang tải..." : tuitionDebt ? `${formatCurrency(tuitionDebt.AmountDue)} VNĐ` : "0 VNĐ"}</strong>
+                <strong>
+                  {tuitionLoading
+                    ? "Đang tải..."
+                    : tuitionDebt
+                    ? `${formatCurrency(tuitionDebt.AmountDue)} VNĐ`
+                    : "0 VNĐ"}
+                </strong>
               </div>
             </div>
             <div className="checkbox-group">
@@ -136,15 +215,22 @@ export default function Payments() {
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="confirm-button"
-            disabled={!isFormValid}
-          >
+          <button type="submit" className="confirm-button" disabled={!isFormValid}>
             Confirm Transaction
           </button>
         </form>
       </div>
+
+      {/* 🟡 Modal cảnh báo */}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h3>⚠️ Warning</h3>
+            <p>{modalMessage}</p>
+            <button onClick={() => setShowModal(false)}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
