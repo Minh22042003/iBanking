@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/OTP.css";
 import { formatCurrency } from "../utils/format";
+import { useCookies } from "react-cookie";
 
 export default function OTP() {
   const [otp, setOtp] = useState("");
@@ -11,13 +12,17 @@ export default function OTP() {
   const [isSuccess, setIsSuccess] = useState(false);
 
   const location = useLocation();
+  // eslint-disable-next-line no-unused-vars
+  const [cookie, , removeCookie] = useCookies(["token", "user"]);
+  const token = cookie.token;
   const navigate = useNavigate();
 
   const {
-    amount,
+    userId,
+    studentId,
     studentInfo,
     payerInfo,
-    transactionId
+    accountBalance
   } = location.state || {};
 
   const handleSubmit = async (e) => {
@@ -25,12 +30,13 @@ export default function OTP() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/otp/verify", {
+      const response = await fetch("/api/payment/confirm", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ otp, transactionId }),
+        body: JSON.stringify({ userId, studentId, otp }),
       });
 
       const data = await response.json();
@@ -94,7 +100,7 @@ export default function OTP() {
                 <p><strong>Sinh viên:</strong> {studentInfo?.name}</p>
                 <p><strong>Người thanh toán:</strong> {payerInfo?.name}</p>
                 <p><strong>Email:</strong> {payerInfo?.email}</p>
-                <p><strong>Số tiền:</strong> {formatCurrency(amount)} VNĐ</p>
+                <p><strong>Số tiền:</strong> {formatCurrency(accountBalance)} VNĐ</p>
               </div>
             )}
 

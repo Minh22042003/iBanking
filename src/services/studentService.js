@@ -1,5 +1,5 @@
 export async function getStudentInfo(studentId, token) {
-  const res = await fetch(`/api/student/${studentId}`, {
+  const res = await fetch(`/api/v2/student/${studentId}`, {
     method: "GET",
     headers: {
       "Authorization": `Bearer ${token}`,

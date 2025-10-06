@@ -6,9 +6,9 @@ import { useCookies } from "react-cookie";
 export default function Login() {
 
   const navigate = useNavigate();
-  const [, setCookie] = useCookies(["token"]);
+  const [, setCookie] = useCookies(["token", "user"]);
 
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
@@ -16,17 +16,17 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch("/api/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ email, password })
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        //setMessage(`Đăng nhập thành công! Xin chào ${data.user.name}`);
         setCookie("token", data.token, {path: "/", maxAge: 3600})
+        setCookie("user", JSON.stringify(data.user), {path: "/", maxAge:3600})
         navigate('/payments')
       } else {
         setMessage(data.message);
@@ -65,10 +65,10 @@ export default function Login() {
                 </span>
                 <input
                   type="text"
-                  placeholder="Username"
+                  placeholder="Email"
                   className="input-field"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="input-group">

@@ -4,19 +4,22 @@ import "../styles/Payments.css";
 import { useCookies } from "react-cookie";
 import { formatCurrency } from "../utils/format";
 import { useStudentInfo } from "../hooks/useStudentInfo";
-import { useUserInfo } from "../hooks/useUserInfo";
-import { useAccountInfo } from "../hooks/useAccountInfo";
-import { useTuitionDebt } from "../hooks/useTuitionDebt";
 
 export default function Payments() {
-  const [cookie, , removeCookie] = useCookies(["token"]);
+  // eslint-disable-next-line no-unused-vars
+  const [cookie, , removeCookie] = useCookies(["token", "user"]);
   const token = cookie.token;
+  let user = cookie.user;
+  if (typeof user === "string") {
+    try {
+      user = JSON.parse(user);
+    } catch {
+      user = null;
+    }
+  }
   const navigate = useNavigate();
 
   const { studentInfo, studentInfoLoading, debouncedFetchRef } = useStudentInfo(token);
-  const user = useUserInfo(token, removeCookie);
-  const account = useAccountInfo(token, user?.UserID);
-  const { tuition: tuitionDebt, loading: tuitionLoading } = useTuitionDebt(token, studentInfo?.StudentID);
 
   const [studentId, setStudentId] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
@@ -32,20 +35,20 @@ export default function Payments() {
   };
 
   useEffect(() => {
-    setIsFormValid(studentId !== "" && agreeTerms && tuitionDebt && tuitionDebt.AmountDue != null && !tuitionLoading);
-  }, [agreeTerms, studentId, studentInfo, tuitionDebt, tuitionLoading]);
+    setIsFormValid(studentId !== "" && agreeTerms);
+  }, [agreeTerms, studentId, studentInfo]);
 
   const handleConfirm = async (e) => {
     e.preventDefault();
 
-    if (!studentInfo || studentInfo.FullName === "") {
+    if (!studentInfo || studentInfo.studentName === "") {
       setModalMessage("Không tìm thấy sinh viên. Vui lòng kiểm tra lại Mã sinh viên.");
       setShowModal(true);
       return;
     }
 
-    const tuitionAmount = parseFloat(tuitionDebt?.AmountDue || 0);
-    const accountBalance = parseFloat(account?.Balance || 0);
+    const tuitionAmount = parseFloat(studentInfo.amount || 0);
+    const accountBalance = parseFloat(user?.balance || 0);
 
     if (tuitionAmount <= 0) {
       setModalMessage("Dữ liệu học phí không hợp lệ. Vui lòng thử lại.");
@@ -62,16 +65,15 @@ export default function Payments() {
     }
 
     try {
-      const response = await fetch("/api/payment", {
+      const response = await fetch("/api/payment/start", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          studentId: studentInfo.StudentID,
-          amount: tuitionAmount,
-          payerId: user?.UserID,
+          userId: user.id,
+          studentId: studentInfo.studentId,
         }),
       });
 
@@ -80,18 +82,18 @@ export default function Payments() {
       if (response.ok) {
         navigate("/otp", {
           state: {
-            transactionId: data.transactionId,
-            amount: tuitionAmount,
+            userId: user.id,
+            studentId: studentInfo.studentId,
             studentInfo: {
-              id: studentInfo.StudentID,
-              name: studentInfo.FullName,
+              id: studentInfo.studentID,
+              name: studentInfo.studentName,
             },
             payerInfo: {
-              name: user?.FullName,
-              phone: user?.Phone,
-              email: user?.Email,
+              name: user?.fullName,
+              phone: user?.phone,
+              email: user?.email,
             },
-            accountBalance,
+            accountBalance
           },
         });
       } else {
@@ -118,21 +120,21 @@ export default function Payments() {
               <label>Full Name</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#128100;</span>
-                <input type="text" value={user?.FullName || "Not found"} readOnly />
+                <input type="text" value={user?.fullName || "Not found"} readOnly />
               </div>
             </div>
             <div className="input-group">
               <label>Phone Number</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#128222;</span>
-                <input type="text" value={user?.Phone || "Not found"} readOnly />
+                <input type="text" value={user?.phone || "Not found"} readOnly />
               </div>
             </div>
             <div className="input-group">
               <label>Email Address</label>
               <div className="input-wrapper">
                 <span className="input-icon">&#9993;</span>
-                <input type="text" value={user?.Email || "Not found"} readOnly />
+                <input type="text" value={user?.email || "Not found"} readOnly />
               </div>
             </div>
           </div>
@@ -158,7 +160,7 @@ export default function Payments() {
                 <span className="input-icon">&#128100;</span>
                 <input
                   type="text"
-                  value={studentInfoLoading ? "Đang tải" : studentInfo?.FullName || ""}
+                  value={studentInfoLoading ? "Đang tải" : studentInfo?.studentName || ""}
                   placeholder="Student Name"
                   readOnly
                 />
@@ -171,11 +173,7 @@ export default function Payments() {
                 <input
                   type="text"
                   value={
-                    tuitionLoading
-                      ? "Đang tải..."
-                      : tuitionDebt
-                      ? `${formatCurrency(tuitionDebt.AmountDue)} VNĐ`
-                      : "0 VNĐ"
+                    formatCurrency(studentInfo?.amount || 0) + " VNĐ"
                   }
                   readOnly
                 />
@@ -189,16 +187,12 @@ export default function Payments() {
             <div className="details-row">
               <div className="detail-item">
                 <span>Available Balance</span>
-                <strong>{formatCurrency(account?.Balance)} VNĐ</strong>
+                <strong>{formatCurrency(user?.balance)} VNĐ</strong>
               </div>
               <div className="detail-item">
                 <span>Tuition Amount to Pay</span>
                 <strong>
-                  {tuitionLoading
-                    ? "Đang tải..."
-                    : tuitionDebt
-                    ? `${formatCurrency(tuitionDebt.AmountDue)} VNĐ`
-                    : "0 VNĐ"}
+                  {formatCurrency(studentInfo?.amount || 0) + " VNĐ"}
                 </strong>
               </div>
             </div>

@@ -2,13 +2,20 @@ import { NavLink } from "react-router-dom";
 import "../styles/Header.css";
 import { useCookies } from "react-cookie";
 import { useState } from "react";
-import { useUserInfo } from "../hooks/useUserInfo";
 
 export default function Header() {
-  const [cookie, , removeCookie] = useCookies(["token"])
-  const token = cookie.token;
+  const [cookie, , removeCookie] = useCookies(["token", "user"])
+  //const token = cookie.token;
+  console.log("cookies.user:", cookie.user, typeof cookie.user);
+  let user = cookie.user;
+  if (typeof user === "string") {
+    try {
+      user = JSON.parse(user);
+    } catch {
+      user = null;
+    }
+  }
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const user = useUserInfo(token, removeCookie);
 
   const toogleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -46,7 +53,7 @@ export default function Header() {
       </nav>
       <div className="user-profile">
         <div className="profile" onClick={toogleMenu}>
-          <span className="welcome-message">Welcome, {user?.Username || "User"}</span>
+          <span className="welcome-message">Welcome, {user?.fullName || "User"}</span>
           <img
             src= {"https://i.pravatar.cc/40"}
             alt="User Avatar"
