@@ -16,7 +16,7 @@ export default function OTP() {
   const [cookie, setCookie, removeCookie] = useCookies(["token", "user"]);
   const token = cookie.token;
   const navigate = useNavigate();
-  let balance = 0;
+  const [balance, setBalance] = useState(0);
 
   const {
     userId,
@@ -48,7 +48,7 @@ export default function OTP() {
         setModalMessage("Thanh toán thành công!");
         setShowModal(true);
         setCookie("user", JSON.stringify(data.user), {path: "/", maxAge:3600})
-        balance = data.user.balance;
+        setBalance(data.user.balance);
         // Sau 3 giây tự động về trang chính
         setTimeout(() => {
           navigate("/payments");
