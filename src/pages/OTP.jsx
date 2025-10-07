@@ -13,15 +13,17 @@ export default function OTP() {
 
   const location = useLocation();
   // eslint-disable-next-line no-unused-vars
-  const [cookie, , removeCookie] = useCookies(["token", "user"]);
+  const [cookie, setCookie, removeCookie] = useCookies(["token", "user"]);
   const token = cookie.token;
   const navigate = useNavigate();
+  let balance = 0;
 
   const {
     userId,
     studentId,
     studentInfo,
     payerInfo,
+    // eslint-disable-next-line no-unused-vars
     accountBalance
   } = location.state || {};
 
@@ -45,7 +47,8 @@ export default function OTP() {
         setIsSuccess(true);
         setModalMessage("Thanh toán thành công!");
         setShowModal(true);
-
+        setCookie("user", JSON.stringify(data.user), {path: "/", maxAge:3600})
+        balance = data.user.balance;
         // Sau 3 giây tự động về trang chính
         setTimeout(() => {
           navigate("/payments");
@@ -100,7 +103,7 @@ export default function OTP() {
                 <p><strong>Sinh viên:</strong> {studentInfo?.name}</p>
                 <p><strong>Người thanh toán:</strong> {payerInfo?.name}</p>
                 <p><strong>Email:</strong> {payerInfo?.email}</p>
-                <p><strong>Số tiền:</strong> {formatCurrency(accountBalance)} VNĐ</p>
+                <p><strong>Số tiền:</strong> {formatCurrency(balance)} VNĐ</p>
               </div>
             )}
 
